@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+instance/
+logs/*.log
+static/uploads/*
+!static/uploads/.gitkeep
+E5.md
+ANNEXES_E5.md
+APPENDICES_E5.md
+CHECKLIST_E5_PUSH.md
+e3.md

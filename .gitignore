@@ -1,0 +1,20 @@
+# Caches et fichiers système
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+.venv/
+
+# Application - Données locales et logs
+app/instance/
+app/logs/*.log
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# Documents de certification (Livrés séparément)
+app/E5.md
+app/ANNEXES_E5.md
+app/APPENDICES_E5.md
+app/CHECKLIST_E5_PUSH.md
+app/e3.md
+app/e3_corrected.md

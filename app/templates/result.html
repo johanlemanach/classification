@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Résultat</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; }
+      img { max-width: 420px; border-radius: 10px; display: block; margin-bottom: 1rem; }
+      .feedback-form { display:flex; flex-wrap:wrap; gap:.75rem; margin: 1rem 0; }
+      .pill { padding:.5rem 1rem; border-radius:999px; border:1px solid #222; background:#fff; cursor:pointer; }
+      .pill:hover { background:#f4f4f4; }
+      .btn { padding:.6rem 1rem; border-radius:8px; border:1px solid #222; background:#fff; text-decoration:none; }
+      .panel { padding: 1rem; border: 1px solid #ddd; border-radius: 10px; max-width: 620px; }
+    </style>
+  </head>
+  <body>
+    <h1>Résultat</h1>
+    <img src="{{ image_data_url }}" alt="submitted image" />
+    <div class="panel">
+    <h2>Classe prédite : {{ predicted_label }}</h2>
+    <p>Confiance : {{ '%.3f'|format(confidence) }}</p>
+    <p>Corriger la prédiction si besoin pour alimenter la boucle de feedback.</p>
+    <form class="feedback-form" action="/feedback" method="post">
+      <input type="hidden" name="image_path" value="{{ image_path }}" />
+      <input type="hidden" name="predicted_label" value="{{ predicted_label }}" />
+      <input type="hidden" name="predicted_confidence" value="{{ confidence }}" />
+      {% for c in classes %}
+        <button class="pill" type="submit" name="user_label" value="{{ c }}">{{ c }}</button>
+      {% endfor %}
+    </form>
+    </div>
+    <p><a href="/">↩︎ Revenir</a></p>
+  </body>
+</html>
