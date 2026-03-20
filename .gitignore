@@ -4,6 +4,8 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 .venv/
+AGENTS.md
+flask_monitoringdashboard.db
 
 # Application - Données locales et logs
 app/instance/

@@ -1,6 +1,8 @@
 import base64
+import importlib
 import io
 import logging
+import os
 import sqlite3
 import time
 import uuid
@@ -12,10 +14,8 @@ from flask import Flask, current_app, g, jsonify, redirect, render_template, req
 from PIL import Image
 from werkzeug.utils import secure_filename
 
-try:
-    import keras
-except ImportError:  # pragma: no cover - handled at runtime when model loading is needed.
-    keras = None
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -58,9 +58,12 @@ def preprocess_from_pil(pil_img: Image.Image) -> np.ndarray:
 
 def load_model():
     """Load the Keras model lazily so tests can inject a fake model."""
-    if keras is None:
+    try:
+        keras = importlib.import_module("keras")
+    except ImportError as exc:
         raise ModelUnavailableError(
-            "Keras is not installed. Install dependencies from requirements.txt to run predictions."
+            "Model runtime is unavailable. Install dependencies from requirements.txt, including "
+            f"the TensorFlow backend. Import error: {exc}"
         )
     return keras.saving.load_model(MODEL_PATH, compile=False)
 
@@ -109,6 +112,8 @@ def configure_logging(app: Flask) -> None:
         "%(asctime)s %(levelname)s [%(name)s] %(message)s"
     )
 
+    for handler in list(app.logger.handlers):
+        handler.close()
     app.logger.handlers.clear()
     app.logger.setLevel(logging.INFO)
 
@@ -117,6 +122,8 @@ def configure_logging(app: Flask) -> None:
     app.logger.addHandler(app_handler)
 
     alert_logger = logging.getLogger("alerts")
+    for handler in list(alert_logger.handlers):
+        handler.close()
     alert_logger.handlers.clear()
     alert_logger.setLevel(logging.WARNING)
     alert_handler = RotatingFileHandler(LOG_DIR / "alerts.log", maxBytes=500_000, backupCount=3)
@@ -200,18 +207,6 @@ def create_app(test_config=None, model_override=None) -> Flask:
         "avg_latency_ms": 0.0,
         "last_latency_ms": 0.0,
     }
-
-    if app.config.get("ENABLE_MONITORING_DASHBOARD", True):
-        try:
-            import flask_monitoringdashboard as dashboard
-
-            dashboard.config.init_from(file=str(BASE_DIR / "dashboard.cfg"))
-            dashboard.bind(app)
-            app.logger.info("flask-monitoringdashboard enabled")
-        except ImportError:
-            app.logger.info("flask-monitoringdashboard not installed; JSON metrics endpoint remains available")
-        except Exception as exc:  # pragma: no cover - defensive logging for optional dependency.
-            app.logger.warning("Unable to initialize flask-monitoringdashboard: %s", exc)
 
     app.teardown_appcontext(close_db)
     with app.app_context():
@@ -337,11 +332,22 @@ def create_app(test_config=None, model_override=None) -> Flask:
     def metrics():
         return jsonify(app.extensions["metrics"]), 200
 
+    if app.config.get("ENABLE_MONITORING_DASHBOARD", True):
+        try:
+            import flask_monitoringdashboard as dashboard
+
+            dashboard.config.init_from(file=str(BASE_DIR / "dashboard.cfg"))
+            dashboard.config.database_name = f"sqlite:///{(INSTANCE_DIR / 'flask_monitoringdashboard.db').resolve()}"
+            dashboard.bind(app)
+            app.logger.info("flask-monitoringdashboard enabled")
+        except ImportError:
+            app.logger.info("flask-monitoringdashboard not installed; JSON metrics endpoint remains available")
+        except Exception as exc:  # pragma: no cover - defensive logging for optional dependency.
+            app.logger.warning("Unable to initialize flask-monitoringdashboard: %s", exc)
+
     return app
 
 
-app = create_app()
-
-
 if __name__ == "__main__":
+    app = create_app()
     app.run(debug=True)

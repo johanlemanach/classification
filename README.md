@@ -29,12 +29,13 @@ git clone git@github.com:johanlemanach/classification.git
 cd classification
 
 # Créer et activer l'environnement virtuel
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate  # Linux/macOS
 # ou .venv\Scripts\activate sur Windows
 
 # Installer les dépendances
-pip install -r app/requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r app/requirements.txt
 ```
 
 ### Lancement
@@ -42,6 +43,7 @@ pip install -r app/requirements.txt
 python app/app.py
 ```
 L'application est accessible sur `http://127.0.0.1:5000`.
+Le dashboard de monitorage local est disponible sur `http://127.0.0.1:5000/dashboard`.
 
 ## 🧪 Tests et Qualité (C21)
 
@@ -50,6 +52,8 @@ Le projet inclut une suite de tests unitaires et d'intégration pour garantir la
 ```bash
 python -m unittest discover -s app/tests -v
 ```
+
+La sortie attendue est `Ran 4 tests ... OK`.
 
 ### Incidents techniques résolus
 L'application a fait l'objet de corrections majeures pour assurer la précision des prédictions :
@@ -60,6 +64,7 @@ L'application a fait l'objet de corrections majeures pour assurer la précision 
 *   `app/` : Source de l'application Flask.
 *   `app/models/` : Modèle Keras `.keras` utilisé pour l'inférence.
 *   `app/instance/` : Base de données SQLite pour le feedback (ignorée par Git).
+*   `app/instance/flask_monitoringdashboard.db` : Base SQLite du dashboard local.
 *   `app/logs/` : Journaux d'événements et d'alertes (ignorés par Git).
 *   `images_to_test/` : Jeu de données pour tester l'application manuellement.
 
